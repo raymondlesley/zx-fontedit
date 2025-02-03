@@ -1,0 +1,4 @@
+10 REM Fontedit loader
+20 CLEAR 23999
+30 LOAD "fontedit" CODE
+40 RANDOMIZE USR 24000
