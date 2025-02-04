@@ -101,7 +101,7 @@ void printf_at(ubyte row, ubyte col, char *fmt, ...);
 void printf_attr_at(ubyte row, ubyte col, ubyte attributes, char *fmt, ...);
 
 ///
-/// plot
+/// plot_xy
 ///
 /// set a point on screen at x, y coordinates
 ///
@@ -109,4 +109,16 @@ void printf_attr_at(ubyte row, ubyte col, ubyte attributes, char *fmt, ...);
 /// @param y
 ///
 void plot_xy(unsigned char x, unsigned char y);
+
+///
+/// draw_line
+///
+/// set a point on screen at x, y coordinates
+///
+/// @param x1 - left coord of start point
+/// @param y1 - top coord of start point
+/// @param x2 - left coord of end point
+/// @param y2 - top coord of end point
+///
+void draw_line(unsigned char x1, unsigned char y1, unsigned char x2, unsigned char y2);
 

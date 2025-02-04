@@ -15,116 +15,18 @@
 #include "sysvars.h"
 #include "screen.h"
 
-/*
+// -- ---------------------------------------------------------------------- --
+// constants
 
-///
-/// get_char_address
-///
-/// get screen memory location of specified point in character positions
-///
-/// @param x_chars x (column) coordinate in character positions
-/// @param y_chars y (row)  coordinate in character positions
-/// @return memory address of character top-left pixel
-///
-const char *get_char_address(ubyte x_chars, ubyte y_chars);  // declaration
-const char *get_char_address(ubyte x_chars, ubyte y_chars)   // definition
-{
-	return zx_cxy2saddr(x_chars, y_chars);
-}
+#define EDIT_PANEL_TOP 1
+#define EDIT_PANEL_LEFT 11
+#define EDIT_PANEL_WIDTH 10
+#define EDIT_PANEL_HEIGHT 10
 
-static const uword *sys_chars = (uword *)0x5C36;  // 'chars' sytem variable
-
-///
-/// print_character_at
-///
-/// output a single character at the specified screen location
-///
-/// @param row (0..23)
-/// @param col column (0..31)
-/// @param char character to print
-///
-void print_character_at(ubyte row, ubyte col, char character);
-void print_character_at(ubyte row, ubyte col, char character)
-{
-	const char *chars = (char *)*(sys_chars); // default = 0x3C00
-	const uword character_offset = character << 3;  // 8* as each char takes 8 bytes
-
-	char *screen_location = (char *)get_char_address(col, row);
-	char *character_location = (char *)(chars + character_offset);
-
-	for (int counter = 0; counter < 8; counter++) {
-		// copy byte to screen memory
-		*screen_location = *character_location;
-		// and move to next pixel row
-		screen_location += 0x0100;
-		character_location++;
-	}
-}
-
-///
-/// print_string_at
-///
-/// output string at specified screen location
-///
-/// @param row (0..23)
-/// @param col column (0..31)
-/// @param text pointer to array of (null-terminated) characters to print
-///
-void print_string_at(ubyte row, ubyte col, char *text);
-void print_string_at(ubyte row, ubyte col, char *text)
-{
-	const char *chars = (char *)*(sys_chars); // default = 0x3C00
-
-	char character = *(text++);
-	uword character_offset = character << 3;  // 8* as each char takes 8 bytes
-
-	char *screen_location = (char *)get_char_address(col, row);
-	char *character_location = (char *)(chars + character_offset);
-
-	do {
-		char *pixel_row = screen_location;  // start at the top left
-		for (int counter = 0; counter < 8; counter++) {
-			// copy byte to screen memory
-			*pixel_row = *character_location;
-			// and move to next pixel row
-			pixel_row += 0x0100;
-			character_location++;  // next row of pixels
-		}
-		character = *(text++);  // next character
-		character_offset = character << 3;
-		character_location = (char *)(chars + character_offset);
-		screen_location++;  // step to next character position
-	} while (character);  // assume null-terminated
-}
-
-///
-/// printf_at
-///
-/// output formatted string at specified screen location
-///
-/// @param row (0..23)
-/// @param col column (0..31)
-/// @param fmt pointer to array of (null-terminated) format string
-///
-void printf_at(ubyte row, ubyte col, char *fmt, ...);
-void printf_at(ubyte row, ubyte col, char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-
-	char buffer[256];
-
-	(void)vsprintf(buffer, fmt, args);
-	print_string_at(row, col, buffer);
-
-	va_end(args);
-}
-
-void plot(unsigned char x, unsigned char y) {
-    *zx_pxy2saddr(x,y) |= zx_px2bitmask(x);
-}
-
-*/
+#define PREVIEW_PANEL_LEFT 26
+#define PREVIEW_PANEL_TOP 7
+#define PREVIEW_PANEL_WIDTH 3
+#define PREVIEW_PANEL_HEIGHT 3
 
 // -- ---------------------------------------------------------------------- --
 
@@ -153,6 +55,57 @@ void draw_edit_panel(ubyte left, ubyte top)
 	print_string_at(bottom, left, "+--------+");
 }
 
+void draw_preview_panel(ubyte left, ubyte top);
+void draw_preview_panel(ubyte left, ubyte top)
+{
+	print_string_at(top, left, "+-+");
+	uword bottom = top + 2;
+	uword right = left + 2;
+	for (ubyte row = top + 1; row < bottom; row++) {
+		print_character_at(row, left, '|');
+		print_character_at(row, right, '|');
+	}
+	print_string_at(bottom, left, "+-+");
+}
+
+void draw_edit_to_preview_lines(void);
+void draw_edit_to_preview_lines(void)
+{
+	// draw edit panel top right to preview panel top left
+	ubyte line1_startx = (EDIT_PANEL_LEFT + EDIT_PANEL_WIDTH) * 8;
+	ubyte line1_starty = (EDIT_PANEL_TOP + 1) * 8;
+	ubyte line1_endx = PREVIEW_PANEL_LEFT * 8;
+	ubyte line1_endy = PREVIEW_PANEL_TOP * 8;
+
+	draw_line(line1_startx, line1_starty, line1_endx, line1_endy);
+
+	// draw edit window bottom right to preview panel bottom left
+	ubyte line2_startx = (EDIT_PANEL_LEFT + EDIT_PANEL_WIDTH) * 8;
+	ubyte line2_starty = (EDIT_PANEL_TOP + EDIT_PANEL_HEIGHT) * 8 - 4;
+	ubyte line2_endx = PREVIEW_PANEL_LEFT * 8;
+	ubyte line2_endy = (PREVIEW_PANEL_TOP + PREVIEW_PANEL_HEIGHT) * 8 - 4;
+
+	draw_line(line2_startx, line2_starty, line2_endx, line2_endy);
+}
+
+void draw_divider(ubyte row);
+void draw_divider(ubyte row)
+{
+	print_string_at(row, 0, "+------------------------------+");
+}
+
+void draw_main_screen(void);
+void draw_main_screen(void)
+{
+	zx_cls(INK_BLACK | PAPER_WHITE);
+	draw_screen_border();
+	draw_edit_panel(EDIT_PANEL_LEFT, EDIT_PANEL_TOP);
+	draw_preview_panel(PREVIEW_PANEL_LEFT, PREVIEW_PANEL_TOP);
+	draw_edit_to_preview_lines();
+	draw_divider(11);
+	draw_divider(20);
+}
+
 // -- ---------------------------------------------------------------------- --
 
 int main(void);
@@ -165,11 +118,9 @@ int main(void) {
 
 	// myfunc(0, buffer);
 
-	zx_cls(INK_BLACK | PAPER_WHITE);
 	zx_border(INK_BLACK);
 
-	draw_screen_border();
-	draw_edit_panel(1, 3);
+	draw_main_screen();
 
 
 	s = 0;
@@ -196,6 +147,8 @@ int main(void) {
 			print_string_attr_at(22, 3, "        ", INK_BLACK|PAPER_WHITE);
 		}
 	}
+
+	zx_cls(INK_BLACK | PAPER_WHITE);
 
 	return(0);
 }

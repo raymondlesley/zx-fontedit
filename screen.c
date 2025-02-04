@@ -220,4 +220,45 @@ void plot_xy(unsigned char x, unsigned char y)
     *zx_pxy2saddr(x,y) |= zx_px2bitmask(x);
 }
 
+///
+/// draw_line
+///
+/// set a point on screen at x, y coordinates
+///
+/// @param x1 - left coord of start point
+/// @param y1 - top coord of start point
+/// @param x2 - left coord of end point
+/// @param y2 - top coord of end point
+///
+void draw_line(unsigned char x1, unsigned char y1, unsigned char x2, unsigned char y2)
+{
+    int x = x1;
+    int y = y1;
+    int x_gap = x2 - x1;
+    int y_gap = y2 - y1;
+    int x_dir = x2 > x1 ? 1 : -1;
+    int y_dir = y2 > y1 ? 1 : -1;
+
+    if (abs(x_gap) > abs(y_gap)) {
+        // work x-wise
+        while (x <= x2) {
+            plot_xy(x, y);
+            // next y point
+            x += x_dir;
+            // gradient = y_gap/x_gap
+            y = y1 + y_gap * (x - x1) / x_gap;
+        }
+    }
+    else {
+        // work y-wise
+        while (y <= y2) {
+            plot_xy(x, y);
+            // next y point
+            y += y_dir;
+            // gradient = x_gap/y_gap
+            x = x1 + x_gap * (y-y1) / y_gap;
+        }
+    }
+}
+
 // -- ---------------------------------------------------------------------- --
