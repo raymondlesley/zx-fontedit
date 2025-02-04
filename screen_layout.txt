@@ -1,0 +1,39 @@
+/------------------------------\
+|         +--------+           |
+| Editing |        |\          |
+|         |  ####  | \         |
+|    A    | #    # |  \        |
+|         | #    # |   \       |
+|         | ###### |    \      |
+|         | #    # |     \     |
+|         | #    # |      +-+  |
+|         |        |      |A|  |
+|         +--------+------+-+  |
++------------------------------+
+|  ! "#$%&'()*+,-./01234456789 |
+|                              |
+| ABCDEFGHIJKLMNOPQRSTUVWXYZ   |
+|                              |
+| abcdefghijklmnopqrstuvwxyz   |
+|                              |
+| :;<=>?@ [\]^_£ {|}~©         |
+|                              |
++------------------------------+
+| SYMB+W=menu     Char to edit |
+| > _                 SYMB+E=© |
+\------------------------------/
+
+Letters: QWEYUIASDFG
+Commands:
+loaD
+Save
+character to edit
+Reset (ROM font)
+Quit
+
+Edit mode:
+Save
+
+SYMB+Q = Quit
+SYMB+W = Menu
+SUMB+E = ©
