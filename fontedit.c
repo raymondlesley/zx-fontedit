@@ -187,7 +187,14 @@ int main(void) {
 		if (1) { // }((s % 1000) == 0) {
 			printf_at(21, 2, "%u ", s);
 		}
-		if (in_test_key()) break;
+		ubyte character = in_inkey();
+		if (character) {
+			printf_at(22, 3, "'%c', %02x ", character, character);
+			if (character == ' ') break;
+		}
+		else {
+			print_string_at(22, 3, "        ");
+		}
 	}
 
 	return(0);
