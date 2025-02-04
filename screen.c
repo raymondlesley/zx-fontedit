@@ -29,6 +29,20 @@ const char *get_char_address(ubyte x_chars, ubyte y_chars)   // definition
 static const uword *sys_chars = (uword *)0x5C36;  // 'chars' sytem variable
 
 ///
+/// get_attr_address
+///
+/// get attribute memory location of specified point in character positions
+///
+/// @param x_chars x (column) coordinate in character positions
+/// @param y_chars y (row)  coordinate in character positions
+/// @return memory address of attribute byte
+///
+const char *get_attr_address(ubyte x_chars, ubyte y_chars)
+{
+    return zx_cxy2aaddr(x_chars, y_chars);
+}
+
+///
 /// print_character_at
 ///
 /// output a single character at the specified screen location
@@ -52,6 +66,25 @@ void print_character_at(ubyte row, ubyte col, char character)
 		screen_location += 0x0100;
 		character_location++;
 	}
+}
+
+///
+/// print_character_attr_at
+///
+/// output a single character at the specified screen location
+/// setting screen cell attributes
+///
+/// @param row (0..23)
+/// @param col column (0..31)
+/// @param char character to print
+/// @param ubyte attributes
+///
+void print_character_attr_at(ubyte row, ubyte col, char character, ubyte attributes)
+{
+    print_character_at(row, col, character);
+
+	char *attr_location = (char *)get_attr_address(col, row);
+    *attr_location = attributes;
 }
 
 ///
@@ -90,6 +123,46 @@ void print_string_at(ubyte row, ubyte col, char *text)
 }
 
 ///
+/// print_string_attr_at
+///
+/// output string at specified screen location
+/// setting screen cell attributes
+///
+/// @param row (0..23)
+/// @param col column (0..31)
+/// @param text pointer to array of (null-terminated) characters to print
+/// @param ubyte attributes
+///
+void print_string_attr_at(ubyte row, ubyte col, char *text, ubyte attributes)
+{
+	const char *chars = (char *)*(sys_chars); // default = 0x3C00
+
+	char character = *(text++);
+	uword character_offset = character << 3;  // 8* as each char takes 8 bytes
+
+	char *screen_location = (char *)get_char_address(col, row);
+    ubyte *attr_location = (ubyte *)get_attr_address(col, row);
+	char *character_location = (char *)(chars + character_offset);
+
+	do {
+		char *pixel_row = screen_location;  // start at the top left
+		for (int counter = 0; counter < 8; counter++) {
+			// copy byte to screen memory
+			*pixel_row = *character_location;
+			// and move to next pixel row
+			pixel_row += 0x0100;
+			character_location++;  // next row of pixels
+		}
+		*attr_location = attributes;
+		character = *(text++);  // next character
+		character_offset = character << 3;
+		character_location = (char *)(chars + character_offset);
+		screen_location++;  // step to next character position
+		attr_location++;
+	} while (character);  // assume null-terminated
+}
+
+///
 /// printf_at
 ///
 /// output formatted string at specified screen location
@@ -107,6 +180,29 @@ void printf_at(ubyte row, ubyte col, char *fmt, ...)
 
 	(void)vsprintf(buffer, fmt, args);
 	print_string_at(row, col, buffer);
+
+	va_end(args);
+}
+
+///
+/// printf_attr_at
+///
+/// output formatted string at specified screen location
+/// setting screen cell attributes
+///
+/// @param row (0..23)
+/// @param col column (0..31)
+/// @param fmt pointer to array of (null-terminated) format string
+///
+void printf_attr_at(ubyte row, ubyte col, ubyte attributes, char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+
+	char buffer[256];
+
+	(void)vsprintf(buffer, fmt, args);
+	print_string_attr_at(row, col, buffer, attributes);
 
 	va_end(args);
 }

@@ -131,13 +131,13 @@ void plot(unsigned char x, unsigned char y) {
 void draw_screen_border(void);
 void draw_screen_border(void)
 {
-	print_string_at(0, 0, "/------------------------------\\");
+	print_string_attr_at(0, 0, "/------------------------------\\", INK_WHITE|PAPER_BLACK);
 	for (int row = 1; row<23; row++) {
 		// print_string_at(row, 0, "|                              |");
-		print_character_at(row, 0, '|');
-		print_character_at(row, 31, '|');
+		print_character_attr_at(row, 0, '|', INK_WHITE|PAPER_BLACK);
+		print_character_attr_at(row, 31, '|', INK_WHITE|PAPER_BLACK);
 	}
-	print_string_at(23, 0, "\\------------------------------/");
+	print_string_attr_at(23, 0, "\\------------------------------/", INK_WHITE|PAPER_BLACK);
 }
 
 void draw_edit_panel(ubyte left, ubyte top);
@@ -189,11 +189,11 @@ int main(void) {
 		}
 		ubyte character = in_inkey();
 		if (character) {
-			printf_at(22, 3, "'%c', %02x ", character, character);
+			printf_attr_at(22, 3, INK_BLACK|PAPER_WHITE|FLASH, "'%c', %02x ", character, character);
 			if (character == ' ') break;
 		}
 		else {
-			print_string_at(22, 3, "        ");
+			print_string_attr_at(22, 3, "        ", INK_BLACK|PAPER_WHITE);
 		}
 	}
 
