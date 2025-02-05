@@ -30,6 +30,34 @@
 
 // -- ---------------------------------------------------------------------- --
 
+struct rowcol_t { ubyte row; ubyte col; };
+typedef struct rowcol_t rowcol;
+
+// on-screen location for each character - starting with ' '
+
+rowcol character_location[] = {
+  {16, 14}, {16, 15}, {16, 16}, {16, 17}, {16, 18}, {16, 19},  //  !"#$%
+  {16, 20}, {16, 21}, {16, 22}, {16, 23}, {16, 24}, {16, 25},  // &'()*+
+  {16, 26}, {16, 27}, {16, 28}, {16, 29},                      // ,-./
+  {16, 2},  {16, 3},  {16, 4},  {16, 5},  {16, 6},  {16, 7},   // 012345
+  {16, 8},  {16, 9},  {16, 10}, {16, 11},                      // 6789
+  {18, 2},  {18, 3},  {18, 4},  {18, 5},  {18, 6},  {18, 7},   // :;<=>?
+  {18, 8},  {12, 2},  {12, 3},  {12, 4},  {12, 5},  {12, 6},   // @ABCDE
+  {12, 7},  {12, 8},  {12, 9},  {12, 10}, {12, 11}, {12, 12},  // FGHIJK
+  {12, 13}, {12, 14}, {12, 15}, {12, 16}, {12, 17}, {12, 18},  // LMNOPQ
+  {12, 19}, {12, 20}, {12, 21}, {12, 22}, {12, 23}, {12, 24},  // RSTUVW
+  {12, 25}, {12, 26}, {12, 27},                                // XYZ
+  {18, 10}, {18, 11}, {18, 12}, {18, 13}, {18, 14}, {18, 15},  // [\]^_£
+  {14, 2},  {14, 3},  {14, 4},  {14, 5},  {14, 6},  {14, 7},   // abcdef
+  {14, 8},  {14, 9},  {14, 10}, {14, 11}, {14, 12}, {14, 13},  // ghijkl
+  {14, 14}, {14, 15}, {14, 16}, {14, 17}, {14, 18}, {14, 19},  // mnopqr
+  {14, 20}, {14, 21}, {14, 22}, {14, 23}, {14, 24}, {14, 25},  // stuvwx
+  {14, 26}, {14, 27},                                          // yz
+  {18, 17}, {18, 18}, {18, 19}, {18, 20}, {18, 21}             // {|}~©
+};
+
+// -- ---------------------------------------------------------------------- --
+
 void draw_screen_border(void);
 void draw_screen_border(void)
 {
@@ -94,6 +122,30 @@ void draw_divider(ubyte row)
 	print_string_at(row, 0, "+------------------------------+");
 }
 
+void draw_character_row(ubyte row);
+void draw_character_row(ubyte row)
+{
+	print_string_attr_at(row, 1, "                              ", INK_WHITE|PAPER_BLACK);
+}
+
+void draw_characters(void);
+void draw_characters(void)
+{
+	rowcol location;
+
+	draw_character_row(12);
+	draw_character_row(14);
+	draw_character_row(16);
+	draw_character_row(18);
+
+	for (char character=' '; character <= 0x7F; character++) {
+		location = character_location[character - ' '];
+		if (location.row != 0) {
+			print_character_at(location.row, location.col, character);
+		}
+	}
+}
+
 void draw_main_screen(void);
 void draw_main_screen(void)
 {
@@ -103,6 +155,7 @@ void draw_main_screen(void)
 	draw_preview_panel(PREVIEW_PANEL_LEFT, PREVIEW_PANEL_TOP);
 	draw_edit_to_preview_lines();
 	draw_divider(11);
+	draw_characters();
 	draw_divider(20);
 }
 
@@ -112,43 +165,36 @@ int main(void);
 int main(void) {
 	int x=128, y=81;
 	uword s = 0;
-	// char buffer[10];
 	int num_colours = 8;
 	static const ubyte colours[8] = {INK_BLACK, INK_BLUE, INK_RED, INK_MAGENTA, INK_GREEN, INK_CYAN, INK_YELLOW, INK_WHITE};
-
-	// myfunc(0, buffer);
 
 	zx_border(INK_BLACK);
 
 	draw_main_screen();
 
-
-	s = 0;
-	while (s < 65535) {
-		s++;
-		if (x>0 && x<256 && y>0 && y<192) {
-			plot_xy(x, y);
+	ubyte character = 0;
+	ubyte last_character = 0;
+	do {  // edit loop
+		character = in_inkey();
+		rowcol location;
+		if (character >= ' ' && character <= 0x7F) {
+			location = character_location[character-32];
+			print_character_attr_at(location.row+1, location.col, character, INK_BLACK|PAPER_WHITE|FLASH);
+			last_character = character;
 		}
-		switch (rand() / 8192) {  // 0, 1, 2 or 3
-			case 0: x++; break;
-			case 1: x--; break;
-			case 2: y++; break;
-			case 3: y--; break;
+		else if (character == 0x85) {
+			// special case: (c)
+			character = 0x7F;
+			location = character_location[character-32];
+			print_character_attr_at(location.row+1, location.col, character, INK_BLACK|PAPER_WHITE|FLASH);
+			last_character = character;
 		}
-		if (1) { // }((s % 1000) == 0) {
-			printf_at(21, 2, "%u ", s);
+		else if (last_character != 0) {
+			location = character_location[last_character-32];
+			print_character_attr_at(location.row+1, location.col, last_character, INK_BLACK|PAPER_WHITE);
+			printf_at(22, 15, "last: 0x%02x ", last_character);
 		}
-		ubyte character = in_inkey();
-		if (character) {
-			printf_attr_at(22, 3, INK_BLACK|PAPER_WHITE|FLASH, "'%c', %02x ", character, character);
-			if (character == ' ') break;
-		}
-		else {
-			print_string_attr_at(22, 3, "        ", INK_BLACK|PAPER_WHITE);
-		}
-	}
-
-	zx_cls(INK_BLACK | PAPER_WHITE);
+	} while (character != 0x83);  // loop until break by SYMB+Q
 
 	return(0);
 }
