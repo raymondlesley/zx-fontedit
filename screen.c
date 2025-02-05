@@ -11,6 +11,7 @@
 #include <arch/zx.h>
 
 #include "screen.h"
+#include "sysvars.h"
 
 ///
 /// get_char_address
@@ -26,7 +27,7 @@ const char *get_char_address(ubyte x_chars, ubyte y_chars)   // definition
 	return zx_cxy2saddr(x_chars, y_chars);
 }
 
-static const uword *sys_chars = (uword *)0x5C36;  // 'chars' sytem variable
+//static const uword *sys_chars = (uword *)0x5C36;  // 'chars' sytem variable
 
 ///
 /// get_attr_address
@@ -76,10 +77,10 @@ void print_character_at(ubyte row, ubyte col, char character)
 ///
 /// @param row (0..23)
 /// @param col column (0..31)
-/// @param char character to print
 /// @param ubyte attributes
+/// @param char character to print
 ///
-void print_character_attr_at(ubyte row, ubyte col, char character, ubyte attributes)
+void print_character_attr_at(ubyte row, ubyte col, ubyte attributes, char character)
 {
     print_character_at(row, col, character);
 
@@ -130,10 +131,10 @@ void print_string_at(ubyte row, ubyte col, char *text)
 ///
 /// @param row (0..23)
 /// @param col column (0..31)
-/// @param text pointer to array of (null-terminated) characters to print
 /// @param ubyte attributes
+/// @param text pointer to array of (null-terminated) characters to print
 ///
-void print_string_attr_at(ubyte row, ubyte col, char *text, ubyte attributes)
+void print_string_attr_at(ubyte row, ubyte col, ubyte attributes, char *text)
 {
 	const char *chars = (char *)*(sys_chars); // default = 0x3C00
 
@@ -192,6 +193,7 @@ void printf_at(ubyte row, ubyte col, char *fmt, ...)
 ///
 /// @param row (0..23)
 /// @param col column (0..31)
+/// @param ubyte attributes
 /// @param fmt pointer to array of (null-terminated) format string
 ///
 void printf_attr_at(ubyte row, ubyte col, ubyte attributes, char *fmt, ...)
@@ -202,7 +204,7 @@ void printf_attr_at(ubyte row, ubyte col, ubyte attributes, char *fmt, ...)
 	char buffer[256];
 
 	(void)vsprintf(buffer, fmt, args);
-	print_string_attr_at(row, col, buffer, attributes);
+	print_string_attr_at(row, col, attributes, buffer);
 
 	va_end(args);
 }

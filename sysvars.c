@@ -7,4 +7,4 @@
 
 #include "sysvars.h"
 
-static const uword *sys_chars = (uword *)0x5C36;  // 'chars' sytem variable
+const extern uword *sys_chars = (uword *)0x5C36;  // 'chars' sytem variable

@@ -61,13 +61,13 @@ rowcol character_location[] = {
 void draw_screen_border(void);
 void draw_screen_border(void)
 {
-	print_string_attr_at(0, 0, "/------------------------------\\", INK_WHITE|PAPER_BLACK);
+	print_string_attr_at(0, 0, INK_WHITE|PAPER_BLACK, "/------------------------------\\");
 	for (int row = 1; row<23; row++) {
 		// print_string_at(row, 0, "|                              |");
-		print_character_attr_at(row, 0, '|', INK_WHITE|PAPER_BLACK);
-		print_character_attr_at(row, 31, '|', INK_WHITE|PAPER_BLACK);
+		print_character_attr_at(row, 0, INK_WHITE|PAPER_BLACK, '|');
+		print_character_attr_at(row, 31, INK_WHITE|PAPER_BLACK, '|');
 	}
-	print_string_attr_at(23, 0, "\\------------------------------/", INK_WHITE|PAPER_BLACK);
+	print_string_attr_at(23, 0, INK_WHITE|PAPER_BLACK, "\\------------------------------/");
 }
 
 void draw_edit_panel(ubyte left, ubyte top);
@@ -125,7 +125,7 @@ void draw_divider(ubyte row)
 void draw_character_row(ubyte row);
 void draw_character_row(ubyte row)
 {
-	print_string_attr_at(row, 1, "                              ", INK_WHITE|PAPER_BLACK);
+	print_string_attr_at(row, 1, INK_WHITE|PAPER_BLACK, "                              ");
 }
 
 void draw_characters(void);
@@ -159,6 +159,48 @@ void draw_main_screen(void)
 	draw_divider(20);
 }
 
+void edit_character(ubyte character);
+void edit_character(ubyte character)
+{
+	// First: show character in preview panel
+	print_character_at(PREVIEW_PANEL_TOP+1, PREVIEW_PANEL_LEFT+1, character);
+
+	// Second: load bitmap into edit panel
+	const char *chars = (char *)*(sys_chars); // default = 0x3C00
+	const uword character_offset = character << 3;  // 8* as each char takes 8 bytes
+	char *character_location = (char *)(chars + character_offset);
+
+	ubyte bitmap[8];
+	ubyte bitmask;
+
+	for (ubyte row = 0; row < 8; row++) {
+		// get pixel row
+		// output pixels
+		bitmap[row] = *character_location;
+
+		bitmask = 0x80;  // start with leftmost bit
+		for (ubyte column = 0; column < 8; column++) {
+			if (bitmap[row] & bitmask) {
+				// bit set
+				print_character_attr_at(row + EDIT_PANEL_TOP + 1, column + EDIT_PANEL_LEFT + 1, PAPER_BLACK, ' ');
+			}
+			else {
+				// bit reset
+				print_character_attr_at(row + EDIT_PANEL_TOP + 1, column + EDIT_PANEL_LEFT + 1, PAPER_WHITE, ' ');
+			}
+
+			// next pixel
+			bitmask >>= 1;
+		}
+
+		// next row
+		character_location++;
+	}
+
+	// Third: show edit mode commands in lower panel
+	// Fourth: start edit loop
+}
+
 // -- ---------------------------------------------------------------------- --
 
 int main(void);
@@ -179,19 +221,21 @@ int main(void) {
 		rowcol location;
 		if (character >= ' ' && character <= 0x7F) {
 			location = character_location[character-32];
-			print_character_attr_at(location.row+1, location.col, character, INK_BLACK|PAPER_WHITE|FLASH);
+			print_character_attr_at(location.row+1, location.col, INK_BLACK|PAPER_WHITE|FLASH, character);
 			last_character = character;
+			edit_character(character);
 		}
 		else if (character == 0x85) {
-			// special case: (c)
+			// special case: SYMB+E = (c)
 			character = 0x7F;
 			location = character_location[character-32];
-			print_character_attr_at(location.row+1, location.col, character, INK_BLACK|PAPER_WHITE|FLASH);
+			print_character_attr_at(location.row+1, location.col, INK_BLACK|PAPER_WHITE|FLASH, character);
 			last_character = character;
+			edit_character(character);
 		}
 		else if (last_character != 0) {
 			location = character_location[last_character-32];
-			print_character_attr_at(location.row+1, location.col, last_character, INK_BLACK|PAPER_WHITE);
+			print_character_attr_at(location.row+1, location.col, INK_BLACK|PAPER_WHITE, last_character);
 			printf_at(22, 15, "last: 0x%02x ", last_character);
 		}
 	} while (character != 0x83);  // loop until break by SYMB+Q

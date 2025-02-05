@@ -48,10 +48,10 @@ void print_character_at(ubyte row, ubyte col, char character);
 ///
 /// @param row (0..23)
 /// @param col column (0..31)
-/// @param char character to print
 /// @param ubyte attributes
+/// @param char character to print
 ///
-void print_character_attr_at(ubyte row, ubyte col, char character, ubyte attributes);
+void print_character_attr_at(ubyte row, ubyte col, ubyte attributes, char character);
 
 ///
 /// print_string_at
@@ -72,10 +72,10 @@ void print_string_at(ubyte row, ubyte col, char *text);
 ///
 /// @param row (0..23)
 /// @param col column (0..31)
-/// @param text pointer to array of (null-terminated) characters to print
 /// @param ubyte attributes
+/// @param text pointer to array of (null-terminated) characters to print
 ///
-void print_string_attr_at(ubyte row, ubyte col, char *text, ubyte attributes);
+void print_string_attr_at(ubyte row, ubyte col, ubyte attributes, char *text);
 
 ///
 /// printf_at
@@ -96,6 +96,7 @@ void printf_at(ubyte row, ubyte col, char *fmt, ...);
 ///
 /// @param row (0..23)
 /// @param col column (0..31)
+/// @param ubyte attributes
 /// @param fmt pointer to array of (null-terminated) format string
 ///
 void printf_attr_at(ubyte row, ubyte col, ubyte attributes, char *fmt, ...);

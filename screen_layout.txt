@@ -10,17 +10,17 @@
 |         |        |      |A|  |
 |         +--------+------+-+  |
 +------------------------------+
-|  ! "#$%&'()*+,-./01234456789 |
-|                              |
 | ABCDEFGHIJKLMNOPQRSTUVWXYZ   |
 |                              |
 | abcdefghijklmnopqrstuvwxyz   |
 |                              |
+| 01234456789  !"#$%&'()*+,-./ |
+|                              |
 | :;<=>?@ [\]^_£ {|}~©         |
 |                              |
 +------------------------------+
-| SYMB+W=menu     Char to edit |
-| > _                 SYMB+E=© |
+| Hit char to edit SYMB+E=©    |
+| > _              SYMB+W=menu |
 \------------------------------/
 
 Letters: QWEYUIASDFG

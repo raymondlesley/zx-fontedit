@@ -7,4 +7,4 @@
 
 #include "types.h"
 
-static const uword *sys_chars;  // 'chars' sytem variable
+const extern uword *sys_chars;  // 'chars' sytem variable
