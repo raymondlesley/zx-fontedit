@@ -54,6 +54,18 @@ void print_character_at(ubyte row, ubyte col, char character);
 void print_character_attr_at(ubyte row, ubyte col, ubyte attributes, char character);
 
 ///
+/// set_attr_at
+///
+/// output a single character at the specified screen location
+/// setting screen cell attributes
+///
+/// @param row (0..23)
+/// @param col column (0..31)
+/// @param ubyte attributes
+///
+void set_attr_at(ubyte row, ubyte col, ubyte attributes);
+
+///
 /// print_string_at
 ///
 /// output string at specified screen location
@@ -110,6 +122,16 @@ void printf_attr_at(ubyte row, ubyte col, ubyte attributes, char *fmt, ...);
 /// @param y
 ///
 void plot_xy(unsigned char x, unsigned char y);
+
+///
+/// plot_xy
+///
+/// reset a point on screen at x, y coordinates
+///
+/// @param x
+/// @param y
+///
+void unplot_xy(unsigned char x, unsigned char y);
 
 ///
 /// draw_line

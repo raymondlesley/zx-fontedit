@@ -14,6 +14,7 @@
 #include "types.h"
 #include "sysvars.h"
 #include "screen.h"
+#include "keyboard.h"
 
 // -- ---------------------------------------------------------------------- --
 // constants
@@ -22,11 +23,15 @@
 #define EDIT_PANEL_LEFT 11
 #define EDIT_PANEL_WIDTH 10
 #define EDIT_PANEL_HEIGHT 10
-
 #define PREVIEW_PANEL_LEFT 26
 #define PREVIEW_PANEL_TOP 7
 #define PREVIEW_PANEL_WIDTH 3
 #define PREVIEW_PANEL_HEIGHT 3
+#define PREVIEW_PANEL_X 216  // (26+1)*8 = x coord of top left
+#define PREVIEW_PANEL_Y 64   // (7+1)*8  = y coord of top left
+
+#define NOTE_PANEL_TOP 20
+#define NOTE_PANEL_LEFT 0
 
 // -- ---------------------------------------------------------------------- --
 
@@ -182,11 +187,11 @@ void edit_character(ubyte character)
 		for (ubyte column = 0; column < 8; column++) {
 			if (bitmap[row] & bitmask) {
 				// bit set
-				print_character_attr_at(row + EDIT_PANEL_TOP + 1, column + EDIT_PANEL_LEFT + 1, PAPER_BLACK, ' ');
+				set_attr_at(row + EDIT_PANEL_TOP + 1, column + EDIT_PANEL_LEFT + 1, INK_WHITE|PAPER_BLACK);
 			}
 			else {
 				// bit reset
-				print_character_attr_at(row + EDIT_PANEL_TOP + 1, column + EDIT_PANEL_LEFT + 1, PAPER_WHITE, ' ');
+				set_attr_at(row + EDIT_PANEL_TOP + 1, column + EDIT_PANEL_LEFT + 1, INK_BLACK|PAPER_WHITE);
 			}
 
 			// next pixel
@@ -198,7 +203,66 @@ void edit_character(ubyte character)
 	}
 
 	// Third: show edit mode commands in lower panel
+	print_string_at(NOTE_PANEL_TOP+1, NOTE_PANEL_LEFT+1, "5678=move; space=flip     ");
+	print_string_at(NOTE_PANEL_TOP+2, NOTE_PANEL_LEFT+1, "SYMB+S=save; SYMB+Q=cancel");
+	ubyte x = 0;
+	ubyte y = 0;
+	bitmask = 0x80;
+	print_character_at(EDIT_PANEL_TOP+y+1, EDIT_PANEL_LEFT+x+1, '+');
+
 	// Fourth: start edit loop
+	ubyte keypress = 0;
+	do {  // edit loop
+		do {
+			keypress = in_inkey();
+		} while (keypress == 0);
+		print_character_at(EDIT_PANEL_TOP+y+1, EDIT_PANEL_LEFT+x+1, ' ');
+		if (keypress == '5' || keypress == INKEY_LEFT) {
+			// left
+			if (x > 0)  x--;
+			bitmask <<= 1;
+		}
+		else if (keypress == '6' || keypress == INKEY_DOWN) {
+			// down
+			if (y < 7)  y++;
+		}
+		else if (keypress == '7' || keypress == INKEY_UP) {
+			// up
+			if (y > 0)  y--;
+		}
+		else if (keypress == '8' || keypress == INKEY_RIGHT) {
+			// right
+			if (x < 7)  x++;
+			bitmask >>= 1;
+		}
+		else if (keypress == ' ') {
+			// flip bit
+			if (bitmap[y] & bitmask) {
+				// bit set: reset it
+				set_attr_at(y + EDIT_PANEL_TOP + 1, x + EDIT_PANEL_LEFT + 1, INK_BLACK|PAPER_WHITE);
+				bitmap[y] &= ~bitmask;
+				unplot_xy(PREVIEW_PANEL_X+x, PREVIEW_PANEL_Y+y);
+			}
+			else {
+				// bit reset: set it
+				set_attr_at(y + EDIT_PANEL_TOP + 1, x + EDIT_PANEL_LEFT + 1, INK_WHITE|PAPER_BLACK);
+				bitmap[y] |= bitmask;
+				plot_xy(PREVIEW_PANEL_X+x, PREVIEW_PANEL_Y+y);
+			}
+		}
+		print_character_at(EDIT_PANEL_TOP+y+1, EDIT_PANEL_LEFT+x+1, '+');
+		while (in_inkey() != 0);
+	} while (keypress != INKEY_SYMB_Q);  // loop until break by SYMB+Q
+
+	// Last: tidy up
+	for (row = 0; row < 8; row++) {
+		for (column = 0; column < 8; column++) {
+			set_attr_at(row + EDIT_PANEL_TOP + 1, column + EDIT_PANEL_LEFT + 1, INK_BLACK|PAPER_WHITE);
+		}
+	}
+	print_character_at(EDIT_PANEL_TOP+y+1, EDIT_PANEL_LEFT+x+1, ' ');
+	print_string_at(NOTE_PANEL_TOP+1, NOTE_PANEL_LEFT+1, "                            ");
+	print_string_at(NOTE_PANEL_TOP+2, NOTE_PANEL_LEFT+1, "                            ");
 }
 
 // -- ---------------------------------------------------------------------- --
@@ -217,7 +281,14 @@ int main(void) {
 	ubyte character = 0;
 	ubyte last_character = 0;
 	do {  // edit loop
-		character = in_inkey();
+		// print instructions
+		print_string_at(NOTE_PANEL_TOP+1, NOTE_PANEL_LEFT+1, "Hit char to edit SYMB+E=\0x7F   ");
+		print_string_at(NOTE_PANEL_TOP+2, NOTE_PANEL_LEFT+1, "                 SYMB+W=menu");
+
+		do {
+			character = in_inkey();
+		} while (character == 0);
+		printf_at(21, 2, "char: 0x%02x ", character);
 		rowcol location;
 		if (character >= ' ' && character <= 0x7F) {
 			location = character_location[character-32];
@@ -225,7 +296,7 @@ int main(void) {
 			last_character = character;
 			edit_character(character);
 		}
-		else if (character == 0x85) {
+		else if (character == INKEY_SYMB_E) {
 			// special case: SYMB+E = (c)
 			character = 0x7F;
 			location = character_location[character-32];
@@ -233,12 +304,12 @@ int main(void) {
 			last_character = character;
 			edit_character(character);
 		}
-		else if (last_character != 0) {
+		if (last_character != 0) {
 			location = character_location[last_character-32];
 			print_character_attr_at(location.row+1, location.col, INK_BLACK|PAPER_WHITE, last_character);
-			printf_at(22, 15, "last: 0x%02x ", last_character);
+			printf_at(21, 15, "last: 0x%02x ", last_character);
 		}
-	} while (character != 0x83);  // loop until break by SYMB+Q
+	} while (character != INKEY_SYMB_Q);  // loop until break by SYMB+Q
 
 	return(0);
 }
