@@ -33,7 +33,7 @@
 #define NOTE_PANEL_TOP 20
 #define NOTE_PANEL_LEFT 0
 
-#define USER_FONT_AREA (ubyte *)0xF000
+#define USER_FONT_AREA (ubyte *)0xF900
 #define FONT_SIZE 768
 #define FONT_OFFSET  256  // 32 * 8 = ASCII 00..31
 
@@ -229,8 +229,6 @@ void edit_character(ubyte character)
 	const ubyte *chars = user_font;  // (char *)*(sys_chars); // default = 0x3C00
 	const uword character_offset = character << 3;  // 8* as each char takes 8 bytes
 	ubyte *character_location = (ubyte *)(chars + character_offset);
-	printf_at(4, 1, "0x%04x", chars);
-	printf_at(5, 1, "0x%04x", character_location);
 
 	ubyte bitmap[8];
 	ubyte bitmask;
@@ -260,8 +258,8 @@ void edit_character(ubyte character)
 	}
 
 	// Third: show edit mode commands in lower panel
-	print_string_at(NOTE_PANEL_TOP+1, NOTE_PANEL_LEFT+1, "5678=move;    space=flip   ");
-	print_string_at(NOTE_PANEL_TOP+2, NOTE_PANEL_LEFT+1, "SYMB+W=write; SYMB+Q=cancel");
+	print_string_at(NOTE_PANEL_TOP+1, NOTE_PANEL_LEFT+2, "5678=move;    space=flip    ");
+	print_string_at(NOTE_PANEL_TOP+2, NOTE_PANEL_LEFT+2, "SYMB+W=write; SYMB+Q=cancel ");
 	ubyte x = 0;
 	ubyte y = 0;
 	bitmask = 0x80;
@@ -311,8 +309,6 @@ void edit_character(ubyte character)
 		else if (keypress == INKEY_SYMB_W) {
 			// save
 			character_location = (ubyte *)(chars + character_offset);
-			printf_at(6, 1, "0x%04x", chars);
-			printf_at(7, 1, "0x%04x", character_location);
 
 			for (ubyte row = 0; row < 8; row++) {
 				// get pixel row
@@ -363,14 +359,14 @@ int main(void) {
 	ubyte character = 0;
 	ubyte last_character = 0;
 	do {  // edit loop
-		// print instructions
-		print_string_at(NOTE_PANEL_TOP+1, NOTE_PANEL_LEFT+1, "Hit char to edit SYMB+E=\x7F   ");
-		print_string_at(NOTE_PANEL_TOP+2, NOTE_PANEL_LEFT+1, "                 SYMB+W=menu");
+		// print instructions. NB: 0x7F is copyright character
+		print_string_at(NOTE_PANEL_TOP+1, NOTE_PANEL_LEFT+2, "Hit char to edit SYMB+E=\x7F   ");
+		print_string_at(NOTE_PANEL_TOP+2, NOTE_PANEL_LEFT+2, "                 SYMB+W=menu");
 
 		do {
 			character = in_inkey();
 		} while (character == 0);
-		printf_at(2, 1, "char:0x%02x ", character);
+		printf_at(2, 1, "key:0x%02x ", character);
 		rowcol location;
 		if (character >= ' ' && character <= 0x7F) {
 			location = character_location[character-32];
@@ -389,7 +385,6 @@ int main(void) {
 		if (last_character != 0) {
 			location = character_location[last_character-32];
 			print_character_attr_at(location.row+1, location.col, INK_BLACK|PAPER_WHITE, last_character);
-			printf_at(3, 1, "last:0x%02x ", last_character);
 		}
 		while (in_inkey() != 0);  // wait for key up
 	} while (character != INKEY_SYMB_Q);  // loop until break by SYMB+Q
