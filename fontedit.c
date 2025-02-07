@@ -33,6 +33,10 @@
 #define NOTE_PANEL_TOP 20
 #define NOTE_PANEL_LEFT 0
 
+#define USER_FONT_AREA (ubyte *)0xF000
+#define FONT_SIZE 768
+#define FONT_OFFSET  256  // 32 * 8 = ASCII 00..31
+
 // -- ---------------------------------------------------------------------- --
 
 struct rowcol_t { ubyte row; ubyte col; };
@@ -62,6 +66,48 @@ rowcol character_location[] = {
 };
 
 // -- ---------------------------------------------------------------------- --
+// font routines
+
+void copy_font(ubyte *from, ubyte *to);
+void copy_font(ubyte *from, ubyte *to)
+{
+	// NB: actual font data starts at ' ' character - i.e. 32*8 bytes on
+	to += FONT_OFFSET;
+	from += FONT_OFFSET;
+
+	for (uword i = 0; i < FONT_SIZE; i++) {
+		*to++ = *from++;
+	}
+}
+
+ubyte *user_font = SYS_CHARS_DEFAULT;
+
+void set_font(uword *font_base);
+void set_font(uword *font_base)
+{
+	*sys_chars = font_base;
+}
+
+void setup_font(void);
+void setup_font(void)
+{
+	user_font = (ubyte *)*sys_chars;
+
+	// check if current font (CHARS) = default, or already using user font
+	if (user_font == SYS_CHARS_DEFAULT) {
+		// copy system font into user font
+		copy_font(SYS_CHARS_DEFAULT, USER_FONT_AREA);
+
+		// set user font
+		user_font = USER_FONT_AREA;
+		set_font(user_font);
+	}
+	// else already using user font
+}
+
+
+// -- ---------------------------------------------------------------------- --
+// screen routines
 
 void draw_screen_border(void);
 void draw_screen_border(void)
@@ -143,10 +189,19 @@ void draw_characters(void)
 	draw_character_row(16);
 	draw_character_row(18);
 
+	set_font(SYS_CHARS_DEFAULT);  // start with ROM font
 	for (char character=' '; character <= 0x7F; character++) {
 		location = character_location[character - ' '];
 		if (location.row != 0) {
 			print_character_at(location.row, location.col, character);
+		}
+	}
+
+	set_font(user_font);  // switch to user font
+	for (char character=' '; character <= 0x7F; character++) {
+		location = character_location[character - ' '];
+		if (location.row != 0) {
+			print_character_at(location.row+1, location.col, character);
 		}
 	}
 }
@@ -171,9 +226,11 @@ void edit_character(ubyte character)
 	print_character_at(PREVIEW_PANEL_TOP+1, PREVIEW_PANEL_LEFT+1, character);
 
 	// Second: load bitmap into edit panel
-	const char *chars = (char *)*(sys_chars); // default = 0x3C00
+	const ubyte *chars = user_font;  // (char *)*(sys_chars); // default = 0x3C00
 	const uword character_offset = character << 3;  // 8* as each char takes 8 bytes
-	char *character_location = (char *)(chars + character_offset);
+	ubyte *character_location = (ubyte *)(chars + character_offset);
+	printf_at(4, 1, "0x%04x", chars);
+	printf_at(5, 1, "0x%04x", character_location);
 
 	ubyte bitmap[8];
 	ubyte bitmask;
@@ -203,14 +260,15 @@ void edit_character(ubyte character)
 	}
 
 	// Third: show edit mode commands in lower panel
-	print_string_at(NOTE_PANEL_TOP+1, NOTE_PANEL_LEFT+1, "5678=move; space=flip     ");
-	print_string_at(NOTE_PANEL_TOP+2, NOTE_PANEL_LEFT+1, "SYMB+S=save; SYMB+Q=cancel");
+	print_string_at(NOTE_PANEL_TOP+1, NOTE_PANEL_LEFT+1, "5678=move;    space=flip   ");
+	print_string_at(NOTE_PANEL_TOP+2, NOTE_PANEL_LEFT+1, "SYMB+W=write; SYMB+Q=cancel");
 	ubyte x = 0;
 	ubyte y = 0;
 	bitmask = 0x80;
 	print_character_at(EDIT_PANEL_TOP+y+1, EDIT_PANEL_LEFT+x+1, '+');
 
 	// Fourth: start edit loop
+	while (in_inkey() != 0);  // wait for key up
 	ubyte keypress = 0;
 	do {  // edit loop
 		do {
@@ -250,8 +308,21 @@ void edit_character(ubyte character)
 				plot_xy(PREVIEW_PANEL_X+x, PREVIEW_PANEL_Y+y);
 			}
 		}
+		else if (keypress == INKEY_SYMB_W) {
+			// save
+			character_location = (ubyte *)(chars + character_offset);
+			printf_at(6, 1, "0x%04x", chars);
+			printf_at(7, 1, "0x%04x", character_location);
+
+			for (ubyte row = 0; row < 8; row++) {
+				// get pixel row
+				// output pixels
+				*character_location++ = bitmap[row];
+			}
+			break;
+		}
 		print_character_at(EDIT_PANEL_TOP+y+1, EDIT_PANEL_LEFT+x+1, '+');
-		while (in_inkey() != 0);
+		while (in_inkey() != 0);  // wait for key up
 	} while (keypress != INKEY_SYMB_Q);  // loop until break by SYMB+Q
 
 	// Last: tidy up
@@ -261,7 +332,7 @@ void edit_character(ubyte character)
 		}
 	}
 	print_character_at(EDIT_PANEL_TOP+y+1, EDIT_PANEL_LEFT+x+1, ' ');  // cursor
-	print_character_at(PREVIEW_PANEL_TOP+1, PREVIEW_PANEL_LEFT+1, ' '');  // preview
+	print_character_at(PREVIEW_PANEL_TOP+1, PREVIEW_PANEL_LEFT+1, ' ');  // preview
 	print_string_at(NOTE_PANEL_TOP+1, NOTE_PANEL_LEFT+1, "                            ");  // instructions
 	print_string_at(NOTE_PANEL_TOP+2, NOTE_PANEL_LEFT+1, "                            ");  // instructions
 }
@@ -270,14 +341,16 @@ void edit_character(ubyte character)
 
 int main(void);
 int main(void) {
-	int x=128, y=81;
-	uword s = 0;
-	int num_colours = 8;
-	static const ubyte colours[8] = {INK_BLACK, INK_BLUE, INK_RED, INK_MAGENTA, INK_GREEN, INK_CYAN, INK_YELLOW, INK_WHITE};
+	//int x=128, y=81;
+	//uword s = 0;
+	//int num_colours = 8;
+	//static const ubyte colours[8] = {INK_BLACK, INK_BLUE, INK_RED, INK_MAGENTA, INK_GREEN, INK_CYAN, INK_YELLOW, INK_WHITE};
 
 	zx_border(INK_BLACK);
-
+	setup_font();
+	set_font(SYS_CHARS_DEFAULT);
 	draw_main_screen();
+	set_font(user_font);
 
 	ubyte character = 0;
 	ubyte last_character = 0;
@@ -289,7 +362,7 @@ int main(void) {
 		do {
 			character = in_inkey();
 		} while (character == 0);
-		printf_at(21, 2, "char: 0x%02x ", character);
+		printf_at(2, 1, "char:0x%02x ", character);
 		rowcol location;
 		if (character >= ' ' && character <= 0x7F) {
 			location = character_location[character-32];
@@ -308,7 +381,7 @@ int main(void) {
 		if (last_character != 0) {
 			location = character_location[last_character-32];
 			print_character_attr_at(location.row+1, location.col, INK_BLACK|PAPER_WHITE, last_character);
-			printf_at(21, 15, "last: 0x%02x ", last_character);
+			printf_at(3, 1, "last:0x%02x ", last_character);
 		}
 	} while (character != INKEY_SYMB_Q);  // loop until break by SYMB+Q
 

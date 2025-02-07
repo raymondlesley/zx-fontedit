@@ -13,4 +13,9 @@
 #define INKEY_RIGHT         0x09
 
 #define INKEY_SYMB_E        0x85
+#define INKEY_SYMB_S        0x7C
 #define INKEY_SYMB_Q        0x83
+#define INKEY_SYMB_W        0x84
+
+void set_keyboard_repeat_delay(ubyte delay;)
+void set_keyboard_repeat(ubyte rate);
