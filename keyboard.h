@@ -5,6 +5,8 @@
 //
 // -- ---------------------------------------------------------------------- --
 
+#include "types.h"
+
 #define INKEY_a  0x00
 
 #define INKEY_LEFT          0x08
@@ -17,5 +19,5 @@
 #define INKEY_SYMB_Q        0x83
 #define INKEY_SYMB_W        0x84
 
-void set_keyboard_repeat_delay(ubyte delay;)
+void set_keyboard_repeat_delay(ubyte delay);
 void set_keyboard_repeat(ubyte rate);

@@ -19,7 +19,7 @@ tzxmerge = ../../Python/tzxtools/tzxmerge.py
 tzxsplit = ../../Python/tzxtools/tzxsplit.py
 split_opts = -1
 
-objects = fontedit.o screen.o sysvars.o
+objects = fontedit.o screen.o sysvars.o keyboard.o
 
 # %.o: %.c %.h $(PRAGMA_FILE)
 #	${cc} ${cc_opts} -o $@ $<
@@ -32,6 +32,8 @@ screen.o: screen.c screen.h
 	${cc} ${cc_opts} -o screen.o screen.c
 sysvars.o: sysvars.c sysvars.h
 	${cc} ${cc_opts} -o sysvars.o sysvars.c
+keyboard.o: keyboard.c keyboard.h
+	${cc} ${cc_opts} -o keyboard.o keyboard.c
 
 fontedit.tzx: loader.tap fontedit.tap
 	rm -f *.tzx

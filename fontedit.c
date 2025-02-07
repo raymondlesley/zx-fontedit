@@ -347,9 +347,17 @@ int main(void) {
 	//static const ubyte colours[8] = {INK_BLACK, INK_BLUE, INK_RED, INK_MAGENTA, INK_GREEN, INK_CYAN, INK_YELLOW, INK_WHITE};
 
 	zx_border(INK_BLACK);
+	// turn off keyboard repeat
+	set_keyboard_repeat_delay(0);
+	set_keyboard_repeat(0);
+	// set up font
 	setup_font();
 	set_font(SYS_CHARS_DEFAULT);
+
+	// draw main screen
 	draw_main_screen();
+
+	// switch to font being edited
 	set_font(user_font);
 
 	ubyte character = 0;
@@ -383,6 +391,7 @@ int main(void) {
 			print_character_attr_at(location.row+1, location.col, INK_BLACK|PAPER_WHITE, last_character);
 			printf_at(3, 1, "last:0x%02x ", last_character);
 		}
+		while (in_inkey() != 0);  // wait for key up
 	} while (character != INKEY_SYMB_Q);  // loop until break by SYMB+Q
 
 	return(0);
