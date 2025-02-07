@@ -255,14 +255,15 @@ void edit_character(ubyte character)
 	} while (keypress != INKEY_SYMB_Q);  // loop until break by SYMB+Q
 
 	// Last: tidy up
-	for (row = 0; row < 8; row++) {
-		for (column = 0; column < 8; column++) {
+	for (ubyte row = 0; row < 8; row++) {
+		for (ubyte column = 0; column < 8; column++) {
 			set_attr_at(row + EDIT_PANEL_TOP + 1, column + EDIT_PANEL_LEFT + 1, INK_BLACK|PAPER_WHITE);
 		}
 	}
-	print_character_at(EDIT_PANEL_TOP+y+1, EDIT_PANEL_LEFT+x+1, ' ');
-	print_string_at(NOTE_PANEL_TOP+1, NOTE_PANEL_LEFT+1, "                            ");
-	print_string_at(NOTE_PANEL_TOP+2, NOTE_PANEL_LEFT+1, "                            ");
+	print_character_at(EDIT_PANEL_TOP+y+1, EDIT_PANEL_LEFT+x+1, ' ');  // cursor
+	print_character_at(PREVIEW_PANEL_TOP+1, PREVIEW_PANEL_LEFT+1, ' '');  // preview
+	print_string_at(NOTE_PANEL_TOP+1, NOTE_PANEL_LEFT+1, "                            ");  // instructions
+	print_string_at(NOTE_PANEL_TOP+2, NOTE_PANEL_LEFT+1, "                            ");  // instructions
 }
 
 // -- ---------------------------------------------------------------------- --
@@ -282,7 +283,7 @@ int main(void) {
 	ubyte last_character = 0;
 	do {  // edit loop
 		// print instructions
-		print_string_at(NOTE_PANEL_TOP+1, NOTE_PANEL_LEFT+1, "Hit char to edit SYMB+E=\0x7F   ");
+		print_string_at(NOTE_PANEL_TOP+1, NOTE_PANEL_LEFT+1, "Hit char to edit SYMB+E=\x7F   ");
 		print_string_at(NOTE_PANEL_TOP+2, NOTE_PANEL_LEFT+1, "                 SYMB+W=menu");
 
 		do {
