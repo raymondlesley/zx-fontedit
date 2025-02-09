@@ -23,6 +23,17 @@ const char *get_char_address(ubyte x_chars, ubyte y_chars);  // declaration
 ///
 /// get attribute memory location of specified point in character positions
 ///
+/// @param row row in character positions
+/// @param col column in character positions
+/// @return attribute at specified row/column
+///
+ubyte get_row_col_attr(ubyte row, ubyte col);
+
+///
+/// get_attr_address
+///
+/// get attribute memory location of specified point in character positions
+///
 /// @param x_chars x (column) coordinate in character positions
 /// @param y_chars y (row)  coordinate in character positions
 /// @return memory address of attribute byte

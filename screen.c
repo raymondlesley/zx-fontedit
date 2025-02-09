@@ -44,6 +44,21 @@ const char *get_attr_address(ubyte x_chars, ubyte y_chars)
 }
 
 ///
+/// get_attr_address
+///
+/// get attribute memory location of specified point in character positions
+///
+/// @param row row in character positions
+/// @param col column in character positions
+/// @return attribute at specified row/column
+///
+ubyte get_row_col_attr(ubyte row, ubyte col)
+{
+	const char *location = get_attr_address(col, row);
+	return *location;
+}
+
+///
 /// print_character_at
 ///
 /// output a single character at the specified screen location

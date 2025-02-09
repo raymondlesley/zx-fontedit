@@ -9,5 +9,7 @@
 
 extern ubyte *sys_repdel; // 'REPDEL' system variable - keyboard repeat delay
 extern ubyte *sys_repper; // 'REPPER' system variable - keyboard repeat rate
-extern uword *sys_chars;  // 'chars' sytem variable - pointer to font
+extern uword *sys_chars;  // 'CHARS' sytem variable - pointer to font
 #define SYS_CHARS_DEFAULT  (ubyte *)0x3C00
+extern ubyte *sys_rasp;   // 'RASP' system variable - length of warning buzz
+

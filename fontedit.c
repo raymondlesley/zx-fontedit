@@ -389,6 +389,11 @@ int main(void) {
 		while (in_inkey() != 0);  // wait for key up
 	} while (character != INKEY_SYMB_Q);  // loop until break by SYMB+Q
 
+	char buffer[11];
+	input_string(22, 2, buffer, 10);
+	zx_cls(INK_BLACK|PAPER_WHITE);
+	print_string_at(0, 0, buffer);
+
 	return(0);
 }
 
