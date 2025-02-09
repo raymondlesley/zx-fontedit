@@ -10,6 +10,7 @@
 
 #include <arch/zx.h>
 #include <input.h>
+#include <sound.h>
 
 #include "types.h"
 #include "sysvars.h"
@@ -36,6 +37,11 @@
 #define USER_FONT_AREA (ubyte *)0xF900
 #define FONT_SIZE 768
 #define FONT_OFFSET  256  // 32 * 8 = ASCII 00..31
+
+// -- ---------------------------------------------------------------------- --
+
+ubyte beep_length;
+static const uword beep_freq = 400;
 
 // -- ---------------------------------------------------------------------- --
 
@@ -335,12 +341,54 @@ void edit_character(ubyte character)
 
 // -- ---------------------------------------------------------------------- --
 
+#define MENU_TOP   2
+#define MENU_LEFT  1
+
+#define MENU_LOAD  1
+#define MENU_SAVE  2
+#define MENU_RESET 3
+#define MENU_QUIT  4
+
+ubyte do_menu(void);
+ubyte do_menu(void) {
+	print_string_at(MENU_TOP,   MENU_LEFT, "+-------+");
+	print_string_at(MENU_TOP+1, MENU_LEFT, "| Load  |\\");
+	print_string_at(MENU_TOP+2, MENU_LEFT, "| Save  |\\");
+	print_string_at(MENU_TOP+3, MENU_LEFT, "| Reset |\\");
+	print_string_at(MENU_TOP+4, MENU_LEFT, "| Quit  |\\");
+	print_string_at(MENU_TOP+5, MENU_LEFT, "+-------+\\");
+	print_string_at(MENU_TOP+6, MENU_LEFT, " \\\\\\\\\\\\\\\\\\");
+
+    ubyte keypress = 0;
+	while (in_inkey() != 0);  // wait for key up
+	do {
+		keypress = in_inkey();
+	} while (keypress == 0);
+
+	if (keypress == 'l') {
+		return MENU_LOAD;
+	}
+	else if (keypress == 's') {
+		return MENU_SAVE;
+	}
+	else if (keypress == 'r') {
+		return MENU_RESET;
+	}
+	else if (keypress == 'q') {
+		return MENU_QUIT;
+	}
+	else {
+		bit_beep(beep_length, beep_freq);
+	}
+
+	return 0;
+}
+
+// -- ---------------------------------------------------------------------- --
+
 int main(void);
 int main(void) {
-	//int x=128, y=81;
-	//uword s = 0;
-	//int num_colours = 8;
-	//static const ubyte colours[8] = {INK_BLACK, INK_BLUE, INK_RED, INK_MAGENTA, INK_GREEN, INK_CYAN, INK_YELLOW, INK_WHITE};
+    beep_length = *sys_rasp;
 
 	zx_border(INK_BLACK);
 	// turn off keyboard repeat
@@ -382,17 +430,40 @@ int main(void) {
 			last_character = character;
 			edit_character(character);
 		}
+		else if (character == INKEY_SYMB_W) {
+			// menu
+			ubyte menu_option = do_menu();
+			draw_main_screen();
+			if (menu_option == MENU_LOAD) {
+				// load
+				// TODO: implement
+				bit_beep(beep_length, beep_freq);
+			}
+			else if (menu_option == MENU_SAVE) {
+				// save
+				char savename[11];  // 10 characters + null terminator
+				ubyte max_length = 10;
+				print_string_at(22, 2, "Save name:           ");
+				input_string(22, 13, savename, 10);
+				// TODO: implement
+				bit_beep(beep_length, beep_freq);
+			}
+			else if (menu_option == MENU_RESET) {
+				// reset
+				// TODO: implement
+				bit_beep(beep_length, beep_freq);
+			}
+			else if (menu_option == MENU_QUIT) {
+				// quit
+				break;
+			}
+		}
 		if (last_character != 0) {
 			location = character_location[last_character-32];
 			print_character_attr_at(location.row+1, location.col, INK_BLACK|PAPER_WHITE, last_character);
 		}
 		while (in_inkey() != 0);  // wait for key up
 	} while (character != INKEY_SYMB_Q);  // loop until break by SYMB+Q
-
-	char buffer[11];
-	input_string(22, 2, buffer, 10);
-	zx_cls(INK_BLACK|PAPER_WHITE);
-	print_string_at(0, 0, buffer);
 
 	return(0);
 }

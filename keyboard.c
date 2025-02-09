@@ -78,4 +78,6 @@ void input_string(ubyte row, ubyte col, char *buffer, int max_length)
             bit_beep(beep_length, beep_freq);
         }
     } while (keypress != INKEY_ENTER);
+
+    print_character_attr_at(row, col, attr, ' ');
 }
