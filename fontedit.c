@@ -43,6 +43,11 @@
 ubyte beep_length;
 static const uword beep_freq = 400;
 
+void do_beep(void);
+void do_beep(void)
+{
+	bit_beep(beep_length, beep_freq);
+}
 // -- ---------------------------------------------------------------------- --
 
 struct rowcol_t { ubyte row; ubyte col; };
@@ -378,7 +383,7 @@ ubyte do_menu(void) {
 		return MENU_QUIT;
 	}
 	else {
-		bit_beep(beep_length, beep_freq);
+		do_beep();
 	}
 
 	return 0;
@@ -386,9 +391,76 @@ ubyte do_menu(void) {
 
 // -- ---------------------------------------------------------------------- --
 
+void copy_name(char *from , char *to, int length);
+void copy_name(char *from , char *to, int length)
+{
+	int copied = 0;
+
+	while (copied < length) {
+		char character = *from++;
+		if (character == 0x00)  break;
+		*to++ = character;
+		copied++;
+	}
+	while (copied < length) {
+		*to++ = ' ';
+		copied++;
+	}
+}
+
+bool names_match(char *left, char *right, int max_length);
+bool names_match(char *left, char *right, int max_length)
+{
+	int compared = 0;
+
+	while (compared < max_length) {
+		char ch1 = *left++;
+		char ch2 = *right++;
+		if (ch1 != ch2) {
+			return FALSE;
+		}
+		else if (ch1 == ' ' || ch2 == ' ' || ch1 == 0x00 || ch2 == 0x00) {
+			break;
+		}
+	}
+
+	return TRUE;
+}
+
+void do_load(void);
+void do_load(void)
+{
+	struct zxtapehdr header;
+
+	zx_tape_load_block((void *)&header, 17, ZXT_TYPE_HEADER);
+	if (header.hdlen == FONT_SIZE) {
+		zx_tape_load_block((void *)(*sys_chars + FONT_OFFSET), FONT_SIZE, ZXT_TYPE_DATA);
+	}
+	else {
+		// wrong name
+		do_beep();
+	}
+}
+
+void do_save(char *font_name);
+void do_save(char *font_name)
+{
+	struct zxtapehdr header;
+
+	header.hdtype = 3; // code
+	copy_name (font_name, header.hdname, 10);
+	header.hdlen = FONT_SIZE;  // data length
+	header.hdadd = (unsigned int)(*sys_chars + FONT_OFFSET);
+	header.hdvars = 32768;
+
+	zx_tape_save_block((void *)&header, 17, ZXT_TYPE_HEADER);
+	zx_tape_save_block((void *)(*sys_chars + FONT_OFFSET), FONT_SIZE, ZXT_TYPE_DATA);
+}
+
+// -- ---------------------------------------------------------------------- --
+
 int main(void);
 int main(void) {
-    beep_length = *sys_rasp;
 
 	zx_border(INK_BLACK);
 	// turn off keyboard repeat
@@ -433,11 +505,9 @@ int main(void) {
 		else if (character == INKEY_SYMB_W) {
 			// menu
 			ubyte menu_option = do_menu();
-			draw_main_screen();
 			if (menu_option == MENU_LOAD) {
 				// load
-				// TODO: implement
-				bit_beep(beep_length, beep_freq);
+				do_load();
 			}
 			else if (menu_option == MENU_SAVE) {
 				// save
@@ -445,18 +515,18 @@ int main(void) {
 				ubyte max_length = 10;
 				print_string_at(22, 2, "Save name:           ");
 				input_string(22, 13, savename, 10);
-				// TODO: implement
-				bit_beep(beep_length, beep_freq);
+				do_save(savename);
 			}
 			else if (menu_option == MENU_RESET) {
 				// reset
 				// TODO: implement
-				bit_beep(beep_length, beep_freq);
+				do_beep();
 			}
 			else if (menu_option == MENU_QUIT) {
 				// quit
 				break;
 			}
+			draw_main_screen();
 		}
 		if (last_character != 0) {
 			location = character_location[last_character-32];

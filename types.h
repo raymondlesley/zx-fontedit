@@ -10,5 +10,9 @@
 
 typedef unsigned char  ubyte;
 typedef unsigned short uword;
+typedef unsigned char bool;
+
+#define TRUE 1
+#define FALSE 0
 
 #endif // _types_h_
