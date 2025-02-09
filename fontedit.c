@@ -11,6 +11,7 @@
 #include <arch/zx.h>
 #include <input.h>
 #include <sound.h>
+#include <string.h>
 
 #include "types.h"
 #include "sysvars.h"
@@ -86,9 +87,12 @@ void copy_font(ubyte *from, ubyte *to)
 	to += FONT_OFFSET;
 	from += FONT_OFFSET;
 
+/*
 	for (uword i = 0; i < FONT_SIZE; i++) {
 		*to++ = *from++;
 	}
+*/
+	memcpy(to, from, FONT_SIZE);
 }
 
 ubyte *user_font = SYS_CHARS_DEFAULT;
@@ -519,8 +523,7 @@ int main(void) {
 			}
 			else if (menu_option == MENU_RESET) {
 				// reset
-				// TODO: implement
-				do_beep();
+				copy_font((ubyte *)SYS_CHARS_DEFAULT, (ubyte *)*sys_chars);
 			}
 			else if (menu_option == MENU_QUIT) {
 				// quit
